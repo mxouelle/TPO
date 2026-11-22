@@ -1,0 +1,83 @@
+server:
+  port: 8080
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: tenis-skill-games
+
+  # Perfil por defecto: H2 en memoria (desarrollo / correccion academica)
+  datasource:
+    url: jdbc:h2:mem:tenisskillgames;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: UTC
+    show-sql: false
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+  task:
+    execution:
+      pool:
+        core-size: 4
+        max-size: 16
+        queue-capacity: 500
+
+tenis:
+  demo:
+    datos: true
+  seguridad:
+    jwt:
+      secret: "clave-de-desarrollo-tenis-skill-games-uade-tpo-2026-cambiar-en-produccion"
+      expiracion-minutos: 120
+    rate-limit:
+      intentos-por-minuto: 5
+      ventana-segundos: 60
+  notificaciones:
+    # dev  -> simuladores en consola (DevNotifierFactory)
+    # prod -> adaptadores reales Firebase / SendGrid / WhatsApp (ProdNotifierFactory)
+    modo: dev
+    reintentos: 3
+    backoff-inicial-ms: 200
+    asincrono: true
+  scheduler:
+    habilitado: true
+    fixed-delay-ms: 60000
+    recordatorio-horas-1: 24
+    recordatorio-horas-2: 2
+  emparejamiento:
+    delta-ntrp-por-defecto: 0.5
+    radio-max-km-por-defecto: 10
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    ar.edu.uade.tenisskillgames: INFO
+    org.hibernate.SQL: WARN

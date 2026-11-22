@@ -1,0 +1,314 @@
+{
+  "info": {
+    "name": "TenisSkillGames — TPO UADE",
+    "description": "Colección de la API REST de TenisSkillGames. Ejecutar en orden: registro, verificación, login, partidos.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "tokenVerificacion", "value": "" },
+    { "key": "partidoId", "value": "" },
+    { "key": "jugadorId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Autenticación",
+      "item": [
+        {
+          "name": "Registrar usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('tokenVerificacion', body.tokenVerificacion);",
+                  "pm.collectionVariables.set('jugadorId', body.usuario.id);",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Nicolás Méndez\",\n  \"email\": \"nico.demo@tenisskillgames.ar\",\n  \"password\": \"Password123\",\n  \"nivelNTRP\": 3.5,\n  \"zona\": \"Núñez\",\n  \"superficieFavorita\": \"POLVO_DE_LADRILLO\",\n  \"manoHabil\": \"DIESTRO\",\n  \"golpePreferido\": \"DRIVE\",\n  \"latitud\": -34.5453,\n  \"longitud\": -58.4498,\n  \"telefono\": \"+5491155550000\",\n  \"pushToken\": \"fcm-demo\",\n  \"franjasHorarias\": [\"LUN_18-22\", \"SAB_09-13\"]\n}"
+            }
+          }
+        },
+        {
+          "name": "Verificar email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/verificar-email",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{tokenVerificacion}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('token', body.token);",
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nico@tenisskillgames.ar\",\n  \"password\": \"Password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Mi perfil",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Partidos",
+      "item": [
+        {
+          "name": "Buscar partidos (filtros)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/partidos?formato=SINGLES&superficie=POLVO_DE_LADRILLO&ntrpMin=3.0&ntrpMax=4.5&radioKm=12",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "partidos"],
+              "query": [
+                { "key": "formato", "value": "SINGLES" },
+                { "key": "superficie", "value": "POLVO_DE_LADRILLO" },
+                { "key": "ntrpMin", "value": "3.0" },
+                { "key": "ntrpMax", "value": "4.5" },
+                { "key": "radioKm", "value": "12" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear partido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('partidoId', body.id);",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Estado inicial', () => pm.expect(body.estado).to.eql('BUSCANDO_JUGADORES'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/api/partidos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"formato\": \"SINGLES\",\n  \"superficie\": \"POLVO_DE_LADRILLO\",\n  \"clubSede\": \"Club Náutico Núñez\",\n  \"direccion\": \"Av. del Libertador 8500\",\n  \"latitud\": -34.5453,\n  \"longitud\": -58.4498,\n  \"ntrpMin\": 3.0,\n  \"ntrpMax\": 4.5,\n  \"fechaHora\": \"2026-12-15T19:00:00\",\n  \"duracionMinutos\": 90,\n  \"modalidad\": \"AMISTOSO_RECREATIVO\",\n  \"radioMaxKm\": 15,\n  \"estrategia\": \"NTRP\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Detalle del partido",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/partidos/{{partidoId}}"
+          }
+        },
+        {
+          "name": "Postularse",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/api/partidos/{{partidoId}}/postulaciones",
+            "body": { "mode": "raw", "raw": "{\n  \"ladoDeseado\": \"A\"\n}" }
+          }
+        },
+        {
+          "name": "Confirmar asistencia",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/api/partidos/{{partidoId}}/confirmaciones",
+            "body": { "mode": "raw", "raw": "{\n  \"confirmado\": true,\n  \"motivo\": null\n}" }
+          }
+        },
+        {
+          "name": "Emparejar (Strategy)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/partidos/{{partidoId}}/emparejar?estrategia=HISTORIAL&autoInscribir=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "partidos", "{{partidoId}}", "emparejar"],
+              "query": [
+                { "key": "estrategia", "value": "HISTORIAL" },
+                { "key": "autoInscribir", "value": "true" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Descargar iCal (.ics)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/partidos/{{partidoId}}/calendario.ics"
+          }
+        },
+        {
+          "name": "Cancelar partido",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/api/partidos/{{partidoId}}/cancelar",
+            "body": { "mode": "raw", "raw": "{\n  \"motivo\": \"Lluvia sobre polvo de ladrillo\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Resultados y moderación",
+      "item": [
+        {
+          "name": "Cargar resultado por sets",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/api/partidos/{{partidoId}}/resultados",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ganadorLado\": \"A\",\n  \"sets\": [ { \"local\": 6, \"visitante\": 4 }, { \"local\": 7, \"visitante\": 6 } ],\n  \"duracionRealMinutos\": 105,\n  \"observaciones\": \"Cancha 3\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Evaluar fair play",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/api/partidos/{{partidoId}}/evaluaciones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"evaluadoId\": \"00000000-0000-0000-0000-000000000000\",\n  \"fairPlay\": 5,\n  \"puntualidad\": 4,\n  \"comentario\": \"Muy buen partido\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reportar no-show",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/api/partidos/{{partidoId}}/reportes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reportadoId\": \"00000000-0000-0000-0000-000000000000\",\n  \"motivo\": \"NO_SHOW\",\n  \"descripcion\": \"No se presentó ni avisó\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Administración",
+      "item": [
+        {
+          "name": "Login admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.collectionVariables.set('token', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@tenisskillgames.ar\",\n  \"password\": \"Admin1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reportes pendientes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/admin/reportes"
+          }
+        },
+        {
+          "name": "Estadísticas",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/admin/estadisticas"
+          }
+        },
+        {
+          "name": "Auditoría de notificaciones",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/notificaciones?limite=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "notificaciones"],
+              "query": [{ "key": "limite", "value": "50" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
